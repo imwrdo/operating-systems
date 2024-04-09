@@ -1,4 +1,4 @@
-
+#!/bin/bash
 EXIT=0
 
 while [ $EXIT -eq 0 ]
@@ -26,7 +26,35 @@ do
             ;;
         5)  read -p "Podaj rozmiar w bajtach: " SIZE
             ;;
-        6)  command="ls -R"
+        6)  if [ -z "$NAME" ]; then
+                NAME="*"
+            fi
+            if [ -z "$DIRECTORY" ]; then
+                DIRECTORY='~/PG/'
+            fi
+            command="find $DIRECTORY -name \"$NAME\""
+            if [ -n "$DAYS" ]; then
+                command+=" -mtime -$DAYS"
+            fi
+            if [ -n "$SIZE" ]; then
+                command+=" -size +$SIZE"c
+            fi
+            if [ "$TYPE" == "plik" ]; then
+                command+=" -type f"
+            elif [ "$TYPE" == "folder" ]; then
+                command+=" -type d"
+            fi
+            found_files=$(eval $command)
+            if [ -n "$found_files" ]; then
+                for file in $found_files; do
+                    echo "Zawartość pliku: $file"
+                    echo "====================================="
+                    cat "$file"
+                    echo "====================================="
+                done
+            else
+                echo "Nie znaleziono plików."
+            fi
             ;;
         7)  if [ -z "$NAME" ]; then
                 NAME="*"
