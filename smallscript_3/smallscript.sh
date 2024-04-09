@@ -1,11 +1,13 @@
 #!/bin/bash
+
 name="Small_script_3"
 
-zenity --info --title $name --text "\nAutor:Mykola Pozniak\nIndex:201267\nWelcome to my smallscript project, which implements find command in terminal\nIn whis project I am using Bash and Zenity\nEnjoy!"
+zenity --info --title "$name" --text "\nAutor: Mykola Pozniak\nIndex: 201267\nWelcome to my smallscript project, which implements find command in terminal\nIn this project, I am using Bash and Zenity\nEnjoy!"
+
 EXIT=0
-while [ $EXIT -eq 0 ]
-do
-    OPTION=$(zenity --list --height 310 --width 300\
+
+while [ $EXIT -eq 0 ]; do
+    OPTION=$(zenity --list --height 310 --width 300 \
                     --title="Wybierz opcje" \
                     --column="Numer" --column="Opcja" \
                     1 "Nazwa" \
@@ -28,15 +30,13 @@ do
             ;;
         5)  SIZE=$(zenity --entry --title="Podaj rozmiar" --text="Podaj rozmiar w bajtach:")
             ;;
-        6)  zenity --info --title="Zawartosc" --text="$(ls -R)"
-            ;;
-        7)  if [ -z "$NAME" ]; then
-                NAME="*"
+        6)  if [ -z "$NAME" ]; then
+        NAME="*"
             fi
             if [ -z "$DIRECTORY" ]; then
-                DIRECTORY='~/PG/'
+                DIRECTORY="$HOME/PG/"
             fi
-            command="find $DIRECTORY -name \"$NAME\""
+            command="find \"$DIRECTORY\" -name \"$NAME\""
             if [ -n "$DAYS" ]; then
                 command+=" -mtime -$DAYS"
             fi
@@ -48,7 +48,41 @@ do
             elif [ "$TYPE" == "folder" ]; then
                 command+=" -type d"
             fi
-            zenity --info --title="Wyniki wyszukiwania" --text="$(eval $command)"
+            found_files=$(eval "$command")
+            if [ -n "$found_files" ]; then
+                temp_file=$(mktemp /tmp/files_content.XXXXXX)
+                for file in $found_files; do
+                    echo "$(basename "$file"):" >> "$temp_file"
+                    cat "$file" >> "$temp_file"
+                    echo -e "\n\n" >> "$temp_file"
+                done
+                zenity --text-info --title="Zawartość znalezionych plików" --width=600 --height=400 --filename="$temp_file"
+                rm "$temp_file"
+            else
+                zenity --info --title="Wyniki wyszukiwania" --text="Nie znaleziono plików."
+            fi
+            ;;
+
+
+        7)  if [ -z "$NAME" ]; then
+                NAME="*"
+            fi
+            if [ -z "$DIRECTORY" ]; then
+                DIRECTORY="$HOME/PG/"
+            fi
+            command="find \"$DIRECTORY\" -name \"$NAME\""
+            if [ -n "$DAYS" ]; then
+                command+=" -mtime -$DAYS"
+            fi
+            if [ -n "$SIZE" ]; then
+                command+=" -size +$SIZE"c
+            fi
+            if [ "$TYPE" == "plik" ]; then
+                command+=" -type f"
+            elif [ "$TYPE" == "folder" ]; then
+                command+=" -type d"
+            fi
+            zenity --info --title="Wyniki wyszukiwania" --text="$(eval "$command")"
             ;;
         8)  EXIT=1
             zenity --info --title="Koniec" --text="\nKoniec."
