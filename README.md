@@ -7,12 +7,16 @@ This repository contains completed labs for the Operating Systems course at my U
 
 ## Projects Description
 1. CDLinux.pl Distribution Download Counter
-  - Folder: Smallscript_1
+  - Folder: smallscripts/Smallscript_1
   - Status: Completed and Published
   - Description: In this lab, you'll write a script to calculate the total number of downloads for each version of the CDLinux.pl distribution. Downloads via FTP and WWW will be tracked, and multiple downloads from the same IP address for a given distribution version will be counted only once. This exercise enhances your understanding of shell scripting and network programming concepts.
 2. BASH Scripting and Find Command
-  - Folder: Smallscript_2
+  - Folder: smallscripts/Smallscript_2
   - Status: Completed and Published
   - Description: In this lab, you'll write a BASH script that utilizes the find command. The script will implement a menu-driven interface to perform file and folder searches based on user-defined parameters. This exercise enhances your understanding of shell scripting and practical use of Linux commands.
+3. BASH Scripting and Find Command with Zenity
+  - Folder: smallscripts/Smallscript_3
+  - Status: Completed and Published
+  - Description: the same with previous, but with using Zenity
 
 
