@@ -1,0 +1,45 @@
+.TH COPYFINDER 1 "May 28, 2024" "1.02" "User Commands"
+.SH NAME
+copyfinder \- compare files or directories using MD5 sums
+.SH SYNOPSIS
+.B copyfinder
+.RI [ options ]
+.SH DESCRIPTION
+This script compares the MD5 sums of files or directories to determine if they are identical. It can also find duplicate files within a directory.
+.PP
+The following functions are available:
+.TP
+.B compare_files
+Compares two files and indicates whether they are the same or different based on their MD5 sums.
+.TP
+.B compare_directories
+Compares the contents of two directories and indicates whether they are the same or different based on the MD5 sums of the files they contain.
+.TP
+.B find_duplicates
+Finds duplicate files within a directory based on their MD5 sums and provides an option to delete them.
+.SH OPTIONS
+.TP
+.B \-h
+Show a help message describing the program's purpose and usage.
+.TP
+.B \-v
+Show the version information.
+.TP
+.B \-c
+Start the main comparison program, which allows the user to choose between comparing files, comparing directories, and finding duplicate files.
+.SH EXAMPLES
+.B copyfinder -c
+.PP
+Start the program and choose the desired comparison operation from the GUI.
+.TP
+.B copyfinder -h
+.PP
+Show the help message.
+.TP
+.B copyfinder -v
+.PP
+Show the version information.
+.SH AUTHOR
+Mykola Pozniak <sheinnickolas@gmail.com>
+.SH SEE ALSO
+.B md5sum(1), find(1), xargs(1), zenity(1)

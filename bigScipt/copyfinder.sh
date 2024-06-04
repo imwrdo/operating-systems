@@ -1,4 +1,4 @@
-#!/bin/bash
+
 
 # Author : Mykola Pozniak (sheinnickolas@gmail.com)
 # Created On : 8.05.2024
