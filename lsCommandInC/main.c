@@ -3,9 +3,9 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <dirent.h>
-#include <limits.h> 
+#include <limits.h>
 #include <errno.h>
-#include <string.h> 
+#include <string.h>
 #include <sys/stat.h>
 #include <pwd.h>
 #include <time.h>
@@ -13,87 +13,85 @@
 #include <sys/types.h>
 #include <grp.h>
 
-void print_long(char *dir_arg, struct dirent *dir_entry); 
-void flag_handler(char *dir_arg, struct dirent *dir_entry, int flag_all, int flag_long);
-void print_args(char *dir_arg, char *file, int flag_all, int flag_long, int flag_file,int flag_reverse); 
+void print_long(char *dir_arg, struct dirent *dir_entry, int flag_size);
+void flag_handler(char *dir_arg, struct dirent *dir_entry, int flag_all, int flag_long, int flag_size);
+void print_args(char *dir_arg, char *file, int flag_all, int flag_long, int flag_file, int flag_reverse, int flag_size, int flag_recursive);
 
-//main function    
 int main(int argc, char *argv[]) {
-    //initialize flags
-    int flag_long = 0; 
-    int flag_all = 0; 
-    int flag_file = 0; 
+    int flag_long = 0;
+    int flag_all = 0;
+    int flag_file = 0;
     int flag_reverse = 0;
     int flag_size = 0;
+    int flag_recursive = 0;
 
-    //get options 
-    int opt; 
-    while((opt = getopt(argc, argv, "alrs")) != -1) {
+    int opt;
+    while ((opt = getopt(argc, argv, "alrsR")) != -1) {
         switch (opt) {
-        case 'l':   
-            flag_long = 1; 
-            break;
-        case 'a':
-            flag_all = 1; 
-            break;
-        case 'r':
-            flag_reverse = 1;
-            break;
-        case 's':
-            flag_size = 1;
-            break;
-        default:
-            fprintf(stderr, "myls: supports -l and -a options\n"); 
-            exit(EXIT_FAILURE); 
+            case 'l':
+                flag_long = 1;
+                break;
+            case 'a':
+                flag_all = 1;
+                break;
+            case 'r':
+                flag_reverse = 1;
+                break;
+            case 's':
+                flag_size = 1;
+                break;
+            case 'R':
+                flag_recursive = 1;
+                break;
+            default:
+                fprintf(stderr, "myls: supports -l, -a, -r, -s, and -R options\n");
+                exit(EXIT_FAILURE);
         }
     }
 
-    //check command line args and call print_args with appropriate parameters 
-    if(optind == argc) {
-        print_args(".", "NULL", flag_all, flag_long, flag_file,flag_reverse);
-        if(flag_long == 0) {
+    if (optind == argc) {
+        print_args(".", "NULL", flag_all, flag_long, flag_file, flag_reverse, flag_size, flag_recursive);
+        if (flag_long == 0) {
             printf("\n");
         }
-    }else{
-        while(optind < argc) {
+    } else {
+        while (optind < argc) {
             struct stat argbuf;
-            char *arg = argv[optind]; 
-            if((stat(arg, &argbuf)) == -1) {
+            char *arg = argv[optind];
+            if ((stat(arg, &argbuf)) == -1) {
                 printf("myls: cannot access '%s': No such file or directory\n", argv[optind]);
-            }else{
-                if(S_ISREG(argbuf.st_mode)) {
+            } else {
+                if (S_ISREG(argbuf.st_mode)) {
                     flag_file = 1;
-                    print_args(".", arg, flag_all, flag_long, flag_file,flag_reverse); 
+                    print_args(".", arg, flag_all, flag_long, flag_file, flag_reverse, flag_size, flag_recursive);
                 }
-                if(S_ISDIR(argbuf.st_mode)) {
-                    printf("%s:\n", arg); 
-                    print_args(arg, "NULL", flag_all, flag_long, flag_file,flag_reverse); 
+                if (S_ISDIR(argbuf.st_mode)) {
+                    printf("%s:\n", arg);
+                    print_args(arg, "NULL", flag_all, flag_long, flag_file, flag_reverse, flag_size, flag_recursive);
                 }
                 flag_file = 0;
-                if(optind < argc-1) {
-                    printf("\n"); 
+                if (optind < argc - 1) {
+                    printf("\n");
                 }
-                if(flag_long == 0) {
+                if (flag_long == 0) {
                     printf("\n");
                 }
             }
-            optind ++; 
-        }    
+            optind++;
+        }
     }
 }
 
-//function to print file/directory data with ls option -l
-void print_long(char *dir_arg, struct dirent *dir_entry) {
-    struct stat statbuf; 
+void print_long(char *dir_arg, struct dirent *dir_entry, int flag_size) {
+    struct stat statbuf;
     char fp[PATH_MAX];
     sprintf(fp, "%s/%s", dir_arg, dir_entry->d_name);
-    if(stat(fp, &statbuf) == -1) {
+    if (stat(fp, &statbuf) == -1) {
         perror("stat");
-        return;   
+        return;
     }
 
-    //permission data/nlink 
-    printf((S_ISDIR(statbuf.st_mode)) ? "d" : "-"); 
+    printf((S_ISDIR(statbuf.st_mode)) ? "d" : "-");
     printf((statbuf.st_mode & S_IRUSR) ? "r" : "-");
     printf((statbuf.st_mode & S_IWUSR) ? "w" : "-");
     printf((statbuf.st_mode & S_IXUSR) ? "x" : "-");
@@ -105,99 +103,127 @@ void print_long(char *dir_arg, struct dirent *dir_entry) {
     printf((statbuf.st_mode & S_IXOTH) ? "x " : "- ");
     printf("%li ", statbuf.st_nlink);
 
-    //group and user data 
-    struct passwd *pw; 
-    struct group *gid; 
-    pw = getpwuid(statbuf.st_uid);  
-    if(pw == NULL) {
-        perror("getpwuid"); 
-        printf("%d ", statbuf.st_uid); 
-    }else {
-        printf("%s ", pw->pw_name); 
+    struct passwd *pw;
+    struct group *gid;
+    pw = getpwuid(statbuf.st_uid);
+    if (pw == NULL) {
+        perror("getpwuid");
+        printf("%d ", statbuf.st_uid);
+    } else {
+        printf("%s ", pw->pw_name);
     }
     gid = getgrgid(statbuf.st_gid);
-    if(gid == NULL) {
-        perror("getpwuid"); 
-        printf("%d ", statbuf.st_gid); 
-    }else  {
-        printf("%s ", gid->gr_name); 
+    if (gid == NULL) {
+        perror("getpwuid");
+        printf("%d ", statbuf.st_gid);
+    } else {
+        printf("%s ", gid->gr_name);
     }
 
-    //file size
-    printf("%5ld ", statbuf.st_size);
+    if (flag_size == 0) {
+        printf("%5ld ", statbuf.st_size);
+    } else {
+        printf("%5ld ", statbuf.st_blocks / 2);
+    }
 
-    //timestamp
     struct tm *tmp;
     char outstr[200];
     time_t t = statbuf.st_mtime;
-    tmp = localtime(&t);   
-    if(tmp == NULL) {
-        perror("localtime"); 
+    tmp = localtime(&t);
+    if (tmp == NULL) {
+        perror("localtime");
         exit(EXIT_FAILURE);
-    } 
-    strftime(outstr, sizeof(outstr), "%b %d %R", tmp); 
+    }
+    strftime(outstr, sizeof(outstr), "%b %d %R", tmp);
     printf("%s ", outstr);
 
-    //file name 
-    printf("%s\n", dir_entry->d_name); 
+    printf("%s\n", dir_entry->d_name);
 }
 
-//function to check flags and print file/directory info accordingly
-void flag_handler(char *dir_arg, struct dirent *dir_entry, int flag_all, int flag_long) {
-    if(flag_all == 0){
-        if((dir_entry->d_name[0] == '.')) { 
-            return; 
-        } 
+void flag_handler(char *dir_arg, struct dirent *dir_entry, int flag_all, int flag_long, int flag_size) {
+    if (flag_all == 0) {
+        if ((dir_entry->d_name[0] == '.')) {
+            return;
+        }
     }
-    if(flag_long == 0) {
+    if (flag_long == 0 && flag_size == 0) {
         printf("%s ", dir_entry->d_name);
-    }else { 
-        print_long(dir_arg, dir_entry);
+    } else if (flag_long == 1 && flag_size == 0) {
+        print_long(dir_arg, dir_entry, flag_size);
+    } else if (flag_long == 0 && flag_size == 1) {
+        struct stat statbuf;
+        char fp[PATH_MAX];
+        sprintf(fp, "%s/%s", dir_arg, dir_entry->d_name);
+        if (stat(fp, &statbuf) == -1) {
+            perror("stat");
+            return;
+        }
+        printf("%ld ", statbuf.st_blocks);
+        printf("%s ", dir_entry->d_name);
+    } else {
+        print_long(dir_arg, dir_entry, flag_size);
     }
 }
 
-//function to handle cmd-line args
-//function to handle cmd-line args
-void print_args(char *dir_arg, char *file, int flag_all, int flag_long, int flag_file, int flag_reverse) {
-    //open directory
+void print_args(char *dir_arg, char *file, int flag_all, int flag_long, int flag_file, int flag_reverse, int flag_size, int flag_recursive) {
     DIR *dir = opendir(dir_arg);
-    if(dir == NULL) {
+    if (dir == NULL) {
         perror("opendir");
         exit(EXIT_FAILURE);
     }
 
-    //array to store directory entries
-    struct dirent **entries;
+    int count_max = 1024;
+    struct dirent *entries_alloc;
+    struct dirent *entries[count_max];
     int count = 0;
 
-    //read and store directory/file data
     struct dirent *dir_entry;
     errno = 0;
-    while((dir_entry = readdir(dir))!= NULL) {
-        if(flag_file == 1) {
-            if(strcmp(dir_entry->d_name, file) == 0) {
-                entries[count++] = dir_entry;
+    while ((dir_entry = readdir(dir)) != NULL) {
+        entries_alloc = malloc(sizeof(struct dirent));
+        if (entries_alloc == NULL) {
+            perror("malloc");
+            exit(EXIT_FAILURE);
+        }
+        memcpy(entries_alloc, dir_entry, sizeof(struct dirent));
+        if (flag_file == 1) {
+            if (strcmp(dir_entry->d_name, file) == 0) {
+                entries[count++] = entries_alloc;
+            } else {
+                free(entries_alloc);
             }
         } else {
-            entries[count++] = dir_entry;
+            entries[count++] = entries_alloc;
         }
     }
-    if((dir_entry == NULL) && (errno != 0)) {
+    if ((dir_entry == NULL) && (errno != 0)) {
         perror("readdir");
         exit(EXIT_FAILURE);
     }
 
-    //close directory
     closedir(dir);
 
-    //print directory entries in reverse order if -r is set
-    if(flag_reverse) {
-        for(int i = count - 1; i >= 0; i--) {
-            flag_handler(dir_arg, entries[i], flag_all, flag_long);
+    if (flag_reverse) {
+        for (int i = count - 1; i >= 0; i--) {
+            flag_handler(dir_arg, entries[i], flag_all, flag_long, flag_size);
+            free(entries[i]);
         }
     } else {
-        for(int i = 0; i < count; i++) {
-            flag_handler(dir_arg, entries[i], flag_all, flag_long);
+        for (int i = 0; i < count; i++) {
+            flag_handler(dir_arg, entries[i], flag_all, flag_long, flag_size);
+            free(entries[i]);
+        }
+    }
+
+    if (flag_recursive) {
+        for (int i = 0; i < count; i++) {
+            char path[PATH_MAX];
+            snprintf(path, sizeof(path), "%s/%s", dir_arg, entries[i]->d_name);
+            struct stat statbuf;
+            if (stat(path, &statbuf) == 0 && S_ISDIR(statbuf.st_mode) && strcmp(entries[i]->d_name, ".") != 0 && strcmp(entries[i]->d_name, "..") != 0) {
+                printf("\n%s:\n", path);
+                print_args(path, "NULL", flag_all, flag_long, flag_file, flag_reverse, flag_size, flag_recursive);
+            }
         }
     }
 }
